@@ -1,6 +1,6 @@
 {
   "name": "jenkins-remote-api",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Jenkins remote access API with typescript",
   "author": "raye.deng@ringcentral.com",
   "license": "SEE LICENSE IN LICENSE",
