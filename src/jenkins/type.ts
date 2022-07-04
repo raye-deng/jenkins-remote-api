@@ -93,3 +93,11 @@ export type ComputerStatus = {
     "absoluteRemotePath": string,
 }
 
+
+export type UsernamePasswordCredentialCreateParameter = {
+    "username": string,
+    "usernameSecret": true,
+    "password": string,
+    "id": string,
+    "description": string,
+}
