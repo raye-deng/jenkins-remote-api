@@ -1,5 +1,5 @@
 import APIClient from "./api-client";
-import ComputerAPI from "./node";
+import ComputerAPI from "./computer";
 import {Logger} from "../common/logger";
 
 export type JenkinsClient = {
