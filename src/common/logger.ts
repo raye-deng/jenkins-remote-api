@@ -1,8 +1,6 @@
-import {LoggerService} from '@nestjs/common';
-
 import * as winston from 'winston';
 
-export class Logger implements LoggerService {
+export class Logger {
     private readonly instance: winston.Logger;
 
     public constructor() {
