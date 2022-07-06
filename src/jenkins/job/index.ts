@@ -25,7 +25,7 @@ export default class JobAPI {
     }
 
     async rename(name: string, targetName: string) {
-        return this.client.post(`/job/${name}/doRename?newName=${targetName}`);
+        return this.client.post(`/job/${name}/confirmRename?newName=${targetName}`, {json: {newName: targetName}});
     }
 
     async clone(sourceName: string, targetName: string) {
