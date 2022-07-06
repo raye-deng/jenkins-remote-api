@@ -3,10 +3,12 @@ import ComputerAPI from "./computer";
 import {Logger} from "../common/logger";
 import CredentialsAPI from "./credentials";
 import JobAPI from "./job";
+import QueueAPI from "./queue";
 
 export type JenkinsClient = {
     computer: ComputerAPI,
     credentials: CredentialsAPI,
+    queue: QueueAPI,
     job: JobAPI,
     logger: Logger,
 }
@@ -20,6 +22,7 @@ export const init = async (url: string, username: string, token: string): Promis
     const client: JenkinsClient = {
         computer: new ComputerAPI(httpClient),
         credentials: new CredentialsAPI(httpClient),
+        queue: new QueueAPI(httpClient),
         job: new JobAPI(httpClient),
         logger: new Logger()
     }
