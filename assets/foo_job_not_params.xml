@@ -1,0 +1,20 @@
+<flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+    <description/>
+    <keepDependencies>false</keepDependencies>
+    <properties/>
+    <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+        <script>
+            stage("checkout"){ echo "checkout code" }
+            stage("install dependencies"){ echo "install dependencies" }
+            stage("compile"){ echo "compile code" }
+            stage("build"){ echo "build artifacts" }
+            stage("archive"){
+                echo "archive artifacts"
+                sleep(30*1000)
+            }
+            stage("deploy"){ echo "deploy"}</script>
+        <sandbox>true</sandbox>
+    </definition>
+    <triggers/>
+    <disabled>false</disabled>
+</flow-definition>
