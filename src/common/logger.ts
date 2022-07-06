@@ -13,7 +13,7 @@ export class Logger {
         const format = winston.format.combine(customizedFormat, winston.format.timestamp(), winston.format.colorize({message: true}));
 
         this.instance = winston.createLogger({
-            level: process.env.NODE_ENV === 'Production' ? 'info' : 'debug', format,
+            level: 'info', format,
             transports: [
                 new winston.transports.Console({format}),
                 new winston.transports.File({filename: 'log/app.log', level: process.env.NODE_ENV === 'Production' ? 'info' : 'debug', maxsize: 10485760, maxFiles: 7,}),
