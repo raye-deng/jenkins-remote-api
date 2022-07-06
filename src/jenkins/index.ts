@@ -30,3 +30,4 @@ export const init = async (url: string, username: string, token: string): Promis
     client.logger.debug(`Jenkins Remote Access API initialed, host: ${url}`);
     return client;
 }
+

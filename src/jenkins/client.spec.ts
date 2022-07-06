@@ -1,5 +1,5 @@
 import {init, JenkinsClient} from "./index";
-import {Computer} from "./type";
+import {Computer} from "./computer";
 
 describe('api client unit test', () => {
     let client: JenkinsClient;

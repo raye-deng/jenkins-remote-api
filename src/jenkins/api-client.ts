@@ -31,8 +31,16 @@ export default class APIClient {
             return config;
         });
 
-        this.client.interceptors.response.use((response: AxiosResponse) => {
+        this.client.interceptors.response.use(async (response: AxiosResponse) => {
             this.logger.debug(`url:${response.config.url} response: ${JSON.stringify(response.data)}`);
+            const {status} = response;
+            if (status === 201) {
+                const location = response?.headers["location"];
+                if (location) {
+                    response.config.baseURL = undefined;
+                    return await this.client.request(response.config)
+                }
+            }
             return response;
         }, async (error: AxiosError<any>) => {
             const {data} = error?.response;

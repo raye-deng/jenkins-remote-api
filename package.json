@@ -1,10 +1,10 @@
 {
   "name": "jenkins-remote-api",
-  "version": "1.0.4",
+  "version": "1.0.12",
   "description": "Jenkins remote access API with typescript",
   "author": "raye.deng@ringcentral.com",
   "license": "SEE LICENSE IN LICENSE",
-  "main": "dist/jenkins/index.d.ts",
+  "main": "dist/index.js",
   "bugs": {
     "url": "https://github.com/raye-deng/jenkins-remote-api/issues"
   },

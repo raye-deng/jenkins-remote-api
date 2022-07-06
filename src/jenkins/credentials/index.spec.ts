@@ -1,6 +1,6 @@
 import {init, JenkinsClient} from "../index";
-import {UsernamePasswordCredentialCreateParameter} from "../type";
 import exp from "constants";
+import {UsernamePasswordCredentialCreateParameter} from "./index";
 
 describe('credentials api test', () => {
     let client: JenkinsClient;

@@ -1,5 +1,13 @@
 import APIClient from "../api-client";
-import {UsernamePasswordCredentialCreateParameter} from "../type";
+
+
+export type UsernamePasswordCredentialCreateParameter = {
+    "username": string,
+    "usernameSecret": true,
+    "password": string,
+    "id": string,
+    "description": string,
+}
 
 /**
  * only support manage global system domain credentials

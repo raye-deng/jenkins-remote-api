@@ -8,7 +8,7 @@ export default class JobAPI {
     async list(filter: string): Promise<any[]> {
         const {data} = await this.client.get("/api/json");
         const {jobs: list} = data;
-        return list.filter(item => item.name.match(new RegExp(filter, "ig")));
+        return list.filter(item => item.name === filter);
     }
 
     async createOrUpdate(name: string, configXML: string) {
@@ -47,7 +47,7 @@ export default class JobAPI {
     }
 
     async build(name: string, params?: any) {
-        return this.client.post(`/job/${name}/${params ? 'buildWithParameters/api/json' : 'build'}`, params)
+        return this.client.post(`/job/${name}/${params ? 'buildWithParameters' : 'build'}`, params)
     }
 
     async getBuild(name: string, buildNumber: string | number) {

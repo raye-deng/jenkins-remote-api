@@ -10,7 +10,7 @@
             stage("build"){ echo "build artifacts" }
             stage("archive"){
                 echo "archive artifacts"
-                sleep(30*1000)
+                sleep(10)
             }
             stage("deploy"){ echo "deploy"}</script>
         <sandbox>true</sandbox>
