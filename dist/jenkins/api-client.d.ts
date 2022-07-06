@@ -11,5 +11,6 @@ export default class APIClient {
     init(): Promise<void>;
     getCrumb(): Promise<void>;
     get(path: string, options?: AxiosRequestConfig): Promise<AxiosResponse<any, any>>;
-    post(path: string, data: any, options?: AxiosRequestConfig): Promise<AxiosResponse<any, any>>;
+    post(path: string, data?: any, options?: AxiosRequestConfig): Promise<AxiosResponse<any, any>>;
+    postConfig(path: string, data?: any, options?: AxiosRequestConfig): Promise<AxiosResponse<any, any>>;
 }
