@@ -25,4 +25,4 @@ $ npm install jenkins-remote-api@latest
 ```
 
 ## Usage
-    see in each module's jest test file (*.spec.ts)
+    see in each module jest test file (*.spec.ts)
