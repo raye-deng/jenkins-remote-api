@@ -9,6 +9,7 @@ describe('job api unit test', () => {
     }
     const jobName = "foo_job";
     const targetName = "new_foo_job";
+    const notParamsJobName = "foo_job_not_parameters";
 
     beforeEach(async () => {
         client = await init("http://localhost:8080", "dev", "11549e6ff2c72af6cb380fe1cc5f4405f7");
@@ -16,16 +17,14 @@ describe('job api unit test', () => {
 
     it('add or update job', async () => {
         const job_xml1 = fs.readFileSync("./assets/foo_job_not_params.xml", "utf8")
-        const addResult1 = await client.job.createOrUpdate("foo_job_not_params", job_xml1);
+        const addResult1 = await client.job.createOrUpdate(notParamsJobName, job_xml1);
+        expect(addResult1).not.toBe(null);
+
         const job_xml = fs.readFileSync("./assets/foo_job.xml", "utf8")
         const addResult = await client.job.createOrUpdate(jobName, job_xml);
         expect(addResult).not.toBe(null);
     }, 300 * 1000)
 
-    it('delete job', async () => {
-        const delResult = await client.job.remove(jobName)
-        expect(delResult).not.toBe(null);
-    })
 
     it('disable job', async () => {
         const disConnectedResult = await client.job.disable(jobName)
@@ -46,9 +45,9 @@ describe('job api unit test', () => {
         const build = await client.job.build(jobName, params);
         expect(build).not.toBe(null);
 
-        const build1 = await client.job.build("foo_job_not_params");
+        const build1 = await client.job.build(notParamsJobName);
         expect(build1).not.toBe(null);
-    })
+    }, 300 * 1000)
 
     it('rename job', async () => {
         const result = await client.job.rename(jobName, targetName);
@@ -56,7 +55,7 @@ describe('job api unit test', () => {
         const result1 = await client.job.rename(targetName, jobName);
     })
 
-    it('abort build', async () => {
+    it.skip('abort build', async () => {
         const result = await client.job.abortBuild(jobName, 5);
         expect(result).not.toBe(null);
     })
@@ -66,7 +65,7 @@ describe('job api unit test', () => {
         expect(typeof (data)).toBe('number');
     })
 
-    it('get queued status', async () => {
+    it.skip('get queued status', async () => {
         for (let i = 0; i < 10; i++) {
             await new Promise((resolve, reject) => {
                 setTimeout(async () => {
@@ -82,7 +81,7 @@ describe('job api unit test', () => {
 
     }, 30 * 1000)
 
-    it('guess build number in queue', async () => {
+    it.skip('guess build number in queue', async () => {
         const buildNumber = await client.job.guessBuildNumberInQueue(jobName, 39);
         expect(buildNumber).not.toBe(null);
     })
@@ -91,5 +90,12 @@ describe('job api unit test', () => {
         const idAndBuildNumbers = await client.job.getInQueueBuild(jobName);
         client.logger.info(`in queue build :${JSON.stringify(idAndBuildNumbers)}`)
         expect(idAndBuildNumbers).not.toBe(null);
+    })
+
+    it('delete job', async () => {
+        const delResult = await client.job.remove(jobName)
+        expect(delResult).not.toBe(null);
+        const delResult1 = await client.job.remove(notParamsJobName)
+        expect(delResult1).not.toBe(null);
     })
 });

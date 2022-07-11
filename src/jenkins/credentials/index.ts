@@ -1,4 +1,5 @@
 import APIClient from "../api-client";
+import DomainAPI from "./domain";
 
 
 export type UsernamePasswordCredentialCreateParameter = {
@@ -13,15 +14,18 @@ export type UsernamePasswordCredentialCreateParameter = {
  * only support manage global system domain credentials
  */
 export default class CredentialsAPI {
+    domain: DomainAPI;
+
     constructor(private readonly client: APIClient) {
+        this.domain = new DomainAPI(client);
     }
 
-    async getById(id: string) {
-        const {data} = await this.client.get(`/credentials/store/system/domain/_/credential/${id}/api/json`);
+    async getById(id: string, domain: string = '_') {
+        const {data} = await this.client.get(`/credentials/store/system/domain/${domain}/credential/${id}/api/json`);
         return data;
     }
 
-    async add(payload: UsernamePasswordCredentialCreateParameter) {
+    async add(payload: UsernamePasswordCredentialCreateParameter, domain: string = '_') {
         const form = {
             json: {
                 "": "0",
@@ -35,15 +39,14 @@ export default class CredentialsAPI {
                     "description": payload.description,
                     "stapler-class": "com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl",
                     "$class": "com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl"
-                },
-                "Jenkins-Crumb": "ed418e597e2953ce83485dc945ec31223531fcc2f7dff2090a0cbf6e469c53d4"
+                }
             }
         };
-        return this.client.post(`credentials/store/system/domain/_/createCredentials`, form)
+        return this.client.post(`credentials/store/system/domain/${domain}/createCredentials`, form)
     }
 
-    async delete(id: string) {
-        return this.client.post(`/credentials/store/system/domain/_/credential/${id}/doDelete`, {json: {}});
+    async delete(id: string, domain: string = '_') {
+        return this.client.post(`/credentials/store/system/domain/${domain}/credential/${id}/doDelete`, {json: {}});
     }
 
 }

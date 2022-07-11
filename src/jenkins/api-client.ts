@@ -38,30 +38,38 @@ export default class APIClient {
                 const location = response?.headers["location"];
                 if (location) {
                     response.config.baseURL = undefined;
+                    response.config.url = location;
+                    this.logger.info(`re-location to :${location}`);
                     return await this.client.request(response.config)
                 }
             }
             return response;
         }, async (error: AxiosError<any>) => {
-            const {data} = error?.response;
-            const regexp = /<div id=\"error-description\">.*?<\/div>/g;
-            let rawErrorMessage = data.message ? data.message : data.match(regexp);
-            rawErrorMessage = rawErrorMessage ? rawErrorMessage[0].replace(/(<([^>]+)>)/ig, "").replace(/[\r\n]/g, "") : rawErrorMessage;
-
             const {response, config} = error;
-            if (response.status === 403 || response.status === 401) {
+            if (response?.status === 403 || response?.status === 401) {
                 await this.getCrumb();
                 config.baseURL = undefined;
+                this.logger.info(`refresh crumb and retrying api :${config.url}`);
                 return await this.client.request(config)
             }
-            if (response.status === 404 && error?.request?.method === "GET" && error?.request?.path?.indexOf("/api/json") === -1) {
-                config.url = `${error?.request?.path}/api/json`;
+            if (response?.status === 404 && error?.request?.path?.indexOf("/api/json") === -1) {
+                config.url = `${error?.request?.path}${error?.request?.path?.endsWith("/") ? "" : "/"}api/json`;
                 config.baseURL = undefined;
+                this.logger.info(`get api re-trying fetch json api url:${config.url}`);
                 return await this.client.request(config)
             }
 
-            this.logger.error(`api invoke failed,[${error.config.method}] ${error.config.url},${typeof error.response.data == "string" ? error.response.data : JSON.stringify(error.response.data)}`)
-            return Promise.reject(new Error(`${error.message} ${rawErrorMessage ? "(html error message:" + rawErrorMessage + ")" : ''}`));
+            const {data} = response || {};
+            let rawErrorMessage;
+            if (data && response.headers['content-type'] !== "application/json") {
+                const regexp = /(<div id=\"error-description\">(.*?)<\/div>|<h1>Error<\/h1><p>(.*?)<\/div>)/g;
+                rawErrorMessage = data.message ? data.message : data.match(regexp);
+                rawErrorMessage = rawErrorMessage ? rawErrorMessage[0].replace(/(<([^>]+)>)/ig, " ").replace(/[\r\n]/g, " ") : rawErrorMessage;
+            }
+            this.logger.error(`api invoke failed,[${config.method}] ${config.url},${data && typeof data == "string" ? data : JSON.stringify(data)}`)
+            const stack = new Error().stack;
+            error = Object.assign(error, {message: `${error.message} ${rawErrorMessage ? "(html error message:" + rawErrorMessage + ")" : ''}`, stack});
+            return Promise.reject(error);
         });
 
         await this.getCrumb();
@@ -78,11 +86,10 @@ export default class APIClient {
             this.crumb = crumbConfig;
             this.logger.debug(`refresh crumb:${JSON.stringify(this.crumb)}`);
         } catch (e) {
-            throw new Error(
-                "CSRF protection is not enabled on the server at the moment." +
+            e.message = "CSRF protection is not enabled on the server at the moment." +
                 " Perhaps the client was initialized when the CSRF setting was" +
-                " enabled. Please re-initialize the client, also the root cause:" + e.message
-            )
+                " enabled. Please re-initialize the client, also the root cause:\n" + e.message;
+            throw e;
         }
     }
 
