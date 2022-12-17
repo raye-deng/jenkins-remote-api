@@ -102,6 +102,10 @@ export default class APIClient {
             Object.keys(this.crumb).map(k => data.json[k] = this.crumb[k]);
             data.json = JSON.stringify(data.json);
         }
+        data = Object.assign({Submit: ""}, this.crumb, data);
+        if (!data.json) {
+            data.json = JSON.stringify(data);
+        }
         return this.client.post(path, qs.stringify(data), Object.assign({headers: this.crumb}, options || {"content-type": "application/x-www-form-urlencoded"}))
     }
 

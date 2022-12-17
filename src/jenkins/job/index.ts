@@ -1,5 +1,7 @@
 import APIClient from "../api-client";
 
+const FD = require("form-data");
+
 export default class JobAPI {
     constructor(private readonly client: APIClient) {
     }
@@ -48,6 +50,15 @@ export default class JobAPI {
 
     async build(name: string, params?: any) {
         return this.client.post(`/job/${name}/${params ? 'buildWithParameters' : 'build'}`, params)
+    }
+
+    async rebuild(name: string, id: number, params?: any) {
+        return this.client.post(`/job/${name}/${id}/rebuild/configSubmit`, params)
+    }
+
+    async replay(name: string, id: number, script: string) {
+        const fd = {"mainScript": script}
+        return this.client.post(`/job/${name}/${id}/replay/run`, fd)
     }
 
     async getBuild(name: string, buildNumber: string | number) {

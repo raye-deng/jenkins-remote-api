@@ -1,18 +1,21 @@
 import {init, JenkinsClient} from "../index";
 
 const fs = require("fs");
+const FD = require("form-data");
 
 describe('job api unit test', () => {
+    jest.setTimeout(30e3);
     let client: JenkinsClient;
-    let params = {
+    let params: any = {
         branch: "foo_branch"
     }
-    const jobName = "foo_job";
-    const targetName = "new_foo_job";
-    const notParamsJobName = "foo_job_not_parameters";
+    const jobName: string = "foo_job";
+    const targetName: string = "new_foo_job";
+    const notParamsJobName: string = "foo_job_not_parameters";
+
 
     beforeEach(async () => {
-        client = await init("http://localhost:8080", "dev", "11549e6ff2c72af6cb380fe1cc5f4405f7");
+        client = await init("http://localhost:8080", "dev", "111a746759b01973b511b2a02dedc58e7c");
     });
 
     it('add or update job', async () => {
@@ -48,6 +51,19 @@ describe('job api unit test', () => {
         const build1 = await client.job.build(notParamsJobName);
         expect(build1).not.toBe(null);
     }, 300 * 1000)
+
+    it('rebuild with', async () => {
+        const data = new FD();
+        Object.keys(params).map(key => data.append(key, params[key]));
+        const build = await client.job.rebuild(jobName, 1, data);
+        expect(build).not.toBe(null);
+    })
+
+    it('replay with', async () => {
+        const script = fs.readFileSync("./assets/foo_job.groovy", "utf8")
+        const build = await client.job.replay(jobName, 1, script);
+        expect(build).not.toBe(null);
+    })
 
     it('rename job', async () => {
         const result = await client.job.rename(jobName, targetName);
