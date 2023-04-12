@@ -8,8 +8,8 @@ export default class JobAPI {
 
 
     async list(filter: string): Promise<any[]> {
-        const {data} = await this.client.get("/api/json");
-        const {jobs: list} = data;
+        const { data } = await this.client.get("/api/json");
+        const { jobs: list } = data;
         return list.filter(item => item.name === filter);
     }
 
@@ -19,15 +19,15 @@ export default class JobAPI {
     }
 
     async create(name: string, configXML: string) {
-        return this.client.postConfig(`/createItem?name=${name}`, configXML, {headers: {"content-type": 'text/xml'}});
+        return this.client.postConfig(`/createItem?name=${name}`, configXML, { headers: { "content-type": 'text/xml' } });
     }
 
     async update(name: string, configXML: string) {
-        return this.client.postConfig(`/job/${name}/config.xml`, configXML, {headers: {"content-type": 'text/xml'}});
+        return this.client.postConfig(`/job/${name}/config.xml`, configXML, { headers: { "content-type": 'text/xml' } });
     }
 
     async rename(name: string, targetName: string) {
-        return this.client.post(`/job/${name}/confirmRename?newName=${targetName}`, {json: {newName: targetName}});
+        return this.client.post(`/job/${name}/confirmRename?newName=${targetName}`, { json: { newName: targetName } });
     }
 
     async clone(sourceName: string, targetName: string) {
@@ -66,7 +66,7 @@ export default class JobAPI {
     }
 
     async abortBuild(name: string, buildNumber: string | number) {
-        const {data: build} = await this.getBuild(name, buildNumber);
+        const { data: build } = await this.getBuild(name, buildNumber);
         if (build.building) {
             return this.client.post(`/job/${name}/${buildNumber}/stop`)
         }
@@ -77,12 +77,12 @@ export default class JobAPI {
     }
 
     async isInQueue(name: string) {
-        const {data: job} = await this.getByName(name);
+        const { data: job } = await this.getByName(name);
         return job['inQueue'];
     }
 
     async nextBuildNumber(name: string): Promise<number> {
-        const {data: job} = await this.getByName(name);
+        const { data: job } = await this.getByName(name);
         return job["nextBuildNumber"];
     }
 
@@ -102,7 +102,7 @@ export default class JobAPI {
             const p = new Promise(async (resolve, reject) => {
                 try {
                     const buildNumber = await this.guessBuildNumberInQueue(name, id, ids);
-                    resolve({queueId: id, guessBuildNumber: buildNumber})
+                    resolve({ queueId: id, guessBuildNumber: buildNumber })
                 } catch (e) {
                     reject(e)
                 }
@@ -113,7 +113,7 @@ export default class JobAPI {
     }
 
     private async getInQueueIds(name: string) {
-        const {data} = await this.client.post(`/ajaxBuildQueue`);
+        const { data } = await this.client.post(`/ajaxBuildQueue`);
         const regex = new RegExp(`${name}.*?\\/queue\\/cancelItem\\?id=(\\d+)`, "g");
         const items = data.match(regex);
         const ids = items.map(item => parseInt(/\/queue\/cancelItem\?id=(\d+)/g.exec(item)[1])).sort((a, b) => a - b);

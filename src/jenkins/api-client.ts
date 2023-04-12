@@ -1,5 +1,5 @@
-import axios, {AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse} from "axios";
-import {Logger} from "../common/logger";
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import { Logger } from "../common/logger";
 
 const qs = require('qs');
 
@@ -20,7 +20,7 @@ export default class APIClient {
     async init() {
         this.client = axios.create({
             baseURL: this.url,
-            auth: {username: this.username, password: this.apiToken}
+            auth: { username: this.username, password: this.apiToken }
         });
         this.logger = new Logger();
 
@@ -33,7 +33,7 @@ export default class APIClient {
 
         this.client.interceptors.response.use(async (response: AxiosResponse) => {
             this.logger.debug(`url:${response.config.url} response: ${JSON.stringify(response.data)}`);
-            const {status} = response;
+            const { status } = response;
             if (status === 201) {
                 const location = response?.headers["location"];
                 if (location) {
@@ -45,11 +45,16 @@ export default class APIClient {
             }
             return response;
         }, async (error: AxiosError<any>) => {
-            const {response, config} = error;
+            const { response, config } = error;
             if (response?.status === 403 || response?.status === 401) {
                 await this.getCrumb();
                 config.baseURL = undefined;
-                this.logger.info(`refresh crumb and retrying api :${config.url}`);
+                config["isRetry"] = true;
+                this.logger.warn(`refresh crumb and retrying api :${config.url}`);
+                if(config["isRetry"]){
+                    error.message = `${error.message}, request already retry after first time failure.`
+                    return Promise.reject(error);
+                }
                 return await this.client.request(config)
             }
             if (response?.status === 404 && error?.request?.path?.indexOf("/api/json") === -1) {
@@ -59,16 +64,17 @@ export default class APIClient {
                 return await this.client.request(config)
             }
 
-            const {data} = response || {};
+            const { data } = response || {};
             let rawErrorMessage;
             if (data && response.headers['content-type'] !== "application/json") {
                 const regexp = /(<div id=\"error-description\">(.*?)<\/div>|<h1>Error<\/h1><p>(.*?)<\/div>)/g;
                 rawErrorMessage = data.message ? data.message : data.match(regexp);
                 rawErrorMessage = rawErrorMessage ? rawErrorMessage[0].replace(/(<([^>]+)>)/ig, " ").replace(/[\r\n]/g, " ") : rawErrorMessage;
             }
+
             this.logger.error(`api invoke failed,[${config.method}] ${config.url},${data && typeof data == "string" ? data : JSON.stringify(data)}`)
             const stack = new Error().stack;
-            error = Object.assign(error, {message: `${error.message} ${rawErrorMessage ? "(html error message:" + rawErrorMessage + ")" : ''}`, stack});
+            error = Object.assign(error, { message: `${error.message} ${rawErrorMessage ? "(html error message:" + rawErrorMessage + ")" : ''}`, stack });
             return Promise.reject(error);
         });
 
@@ -77,8 +83,12 @@ export default class APIClient {
 
     async getCrumb() {
         try {
-            let {data} = await this.get("/crumbIssuer/api/json");
-            if (typeof data === "string") {
+            let { data, status } = await this.get("/crumbIssuer/api/json");
+            if (status === 404) {
+                this.logger.warn(`CSRF protection is not enable on the server at the moment.`);
+                return;
+            }
+            if (data && typeof data === "string") {
                 data = JSON.parse(data);
             }
             const crumbConfig = {};
@@ -86,6 +96,10 @@ export default class APIClient {
             this.crumb = crumbConfig;
             this.logger.debug(`refresh crumb:${JSON.stringify(this.crumb)}`);
         } catch (e) {
+            if (e?.response?.status === 404) {
+                this.logger.warn(`CSRF protection is not enable on the server at the moment.`);
+                return;
+            }
             e.message = "CSRF protection is not enabled on the server at the moment." +
                 " Perhaps the client was initialized when the CSRF setting was" +
                 " enabled. Please re-initialize the client, also the root cause:\n" + e.message;
@@ -94,7 +108,7 @@ export default class APIClient {
     }
 
     async get(path: string, options?: AxiosRequestConfig) {
-        return this.client.get(path, Object.assign({headers: this.crumb}, options || {}))
+        return this.client.get(path, Object.assign({ headers: this.crumb }, options || {}))
     }
 
     async post(path: string, data: any = {}, options?: AxiosRequestConfig) {
@@ -106,11 +120,11 @@ export default class APIClient {
         if (!data.json) {
             data.json = JSON.stringify(data);
         }
-        return this.client.post(path, qs.stringify(data), Object.assign({headers: this.crumb}, options || {"content-type": "application/x-www-form-urlencoded"}))
+        return this.client.post(path, qs.stringify(data), Object.assign({ headers: this.crumb }, options || { "content-type": "application/x-www-form-urlencoded" }))
     }
 
     async postConfig(path: string, data: any = {}, options?: AxiosRequestConfig) {
-        return this.client.post(path, data, Object.assign({headers: this.crumb}, options || {"content-type": "text/xml"}))
+        return this.client.post(path, data, Object.assign({ headers: this.crumb }, options || { "content-type": "text/xml" }))
     }
 
 }
