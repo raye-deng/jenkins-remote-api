@@ -1,0 +1,97 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const index_1 = require("../index");
+const fs = require("fs");
+const FD = require("form-data");
+describe('job api unit test', () => {
+    jest.setTimeout(30e3);
+    let client;
+    let params = {
+        branch: "foo_branch"
+    };
+    const jobName = "foo_job";
+    const targetName = "new_foo_job";
+    const notParamsJobName = "foo_job_not_parameters";
+    beforeEach(async () => {
+        client = await (0, index_1.init)("http://localhost:8080", "dev", "111a746759b01973b511b2a02dedc58e7c");
+    });
+    it('add or update job', async () => {
+        const job_xml1 = fs.readFileSync("./assets/foo_job_not_params.xml", "utf8");
+        const addResult1 = await client.job.createOrUpdate(notParamsJobName, job_xml1);
+        expect(addResult1).not.toBe(null);
+        const job_xml = fs.readFileSync("./assets/foo_job.xml", "utf8");
+        const addResult = await client.job.createOrUpdate(jobName, job_xml);
+        expect(addResult).not.toBe(null);
+    }, 300 * 1000);
+    it('disable job', async () => {
+        const disConnectedResult = await client.job.disable(jobName);
+        expect(disConnectedResult).not.toBe(null);
+    });
+    it('enable job', async () => {
+        const launchResult = await client.job.enable(jobName);
+        expect(launchResult).not.toBe(null);
+    });
+    it('list job', async () => {
+        const jobs = await client.job.list(jobName);
+        expect(jobs && jobs.length > 0).toBe(true);
+    }, 300 * 1000);
+    it('build with', async () => {
+        const build = await client.job.build(jobName, params);
+        expect(build).not.toBe(null);
+        const build1 = await client.job.build(notParamsJobName);
+        expect(build1).not.toBe(null);
+    }, 300 * 1000);
+    it('rebuild with', async () => {
+        const data = new FD();
+        Object.keys(params).map(key => data.append(key, params[key]));
+        const build = await client.job.rebuild(jobName, 1, data);
+        expect(build).not.toBe(null);
+    });
+    it('replay with', async () => {
+        const script = fs.readFileSync("./assets/foo_job.groovy", "utf8");
+        const build = await client.job.replay(jobName, 1, script);
+        expect(build).not.toBe(null);
+    });
+    it('rename job', async () => {
+        const result = await client.job.rename(jobName, targetName);
+        expect(result).not.toBe(null);
+        const result1 = await client.job.rename(targetName, jobName);
+    });
+    it.skip('abort build', async () => {
+        const result = await client.job.abortBuild(jobName, 5);
+        expect(result).not.toBe(null);
+    });
+    it('get next build number', async () => {
+        const data = await client.job.nextBuildNumber(jobName);
+        expect(typeof (data)).toBe('number');
+    });
+    it.skip('get queued status', async () => {
+        for (let i = 0; i < 10; i++) {
+            await new Promise((resolve, reject) => {
+                setTimeout(async () => {
+                    const { data: build } = await client.job.build(jobName, { branch: 'foo_branch_1' + i });
+                    client.logger.info(`start build success build queue id:${build.id}`);
+                    resolve(build);
+                }, i * 3 * 100);
+            });
+        }
+        const data = await client.job.isInQueue(jobName);
+        expect(data).not.toBe(null);
+    }, 30 * 1000);
+    it.skip('guess build number in queue', async () => {
+        const buildNumber = await client.job.guessBuildNumberInQueue(jobName, 39);
+        expect(buildNumber).not.toBe(null);
+    });
+    it('get in queue build and guess build numbers', async () => {
+        const idAndBuildNumbers = await client.job.getInQueueBuild(jobName);
+        client.logger.info(`in queue build :${JSON.stringify(idAndBuildNumbers)}`);
+        expect(idAndBuildNumbers).not.toBe(null);
+    });
+    it('delete job', async () => {
+        const delResult = await client.job.remove(jobName);
+        expect(delResult).not.toBe(null);
+        const delResult1 = await client.job.remove(notParamsJobName);
+        expect(delResult1).not.toBe(null);
+    });
+});
+//# sourceMappingURL=job.spec.js.map
