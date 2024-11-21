@@ -78,8 +78,16 @@ export default class JobAPI {
     }
   }
 
+  async deleteBuild(name: string, buildNumber: string | number) {
+    return this.client.post(`/job/${name}/${buildNumber}/doDelete`);
+  }
+
   async getByName(name: string) {
     return this.client.get(`/job/${name}/api/json`);
+  }
+
+  async getByNameWithTree(name: string, tree: string) {
+    return this.client.get(`/job/${name}/api/json?tree=${tree}`);
   }
 
   async isInQueue(name: string) {
@@ -101,7 +109,7 @@ export default class JobAPI {
     return buildNumber;
   }
 
-  async getInQueueBuild(name: string): Promise<{ queueId: number, guessBuildNumber: number }[]> {
+  async getInQueueBuild(name: string): Promise<{ queueId: number, guessBuildNumber: number; }[]> {
     const ids = await this.getInQueueIds(name);
     const ps = [];
     ids.map(id => {
