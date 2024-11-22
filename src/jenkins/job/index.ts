@@ -36,6 +36,10 @@ export default class JobAPI {
     return this.client.post(`/job/${name}/confirmRename?newName=${targetName}`, { json: { newName: targetName } });
   }
 
+  async getConfig(name) {
+    return this.client.get(`/job/${name}/config.xml`);
+  }
+
   async clone(sourceName: string, targetName: string) {
     return this.client.post(`/createItem?name=${targetName}&mode=copy&from=${sourceName}`, {});
   }

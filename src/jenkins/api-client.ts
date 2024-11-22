@@ -25,8 +25,8 @@ export default class APIClient {
         this.logger = new Logger();
 
         this.client.interceptors.request.use((config: AxiosRequestConfig) => {
-            if (config.method === "get" && config.url.indexOf("/api/json") === -1) {
-                config.url = `${config.url}/api/json`
+            if (config.method === "get" && config.url.indexOf("/api/json") === -1 && !config.url.includes('.xml')) {
+                config.url = `${config.url}/api/json`;
             }
             return config;
         });
@@ -40,7 +40,7 @@ export default class APIClient {
                     response.config.baseURL = undefined;
                     response.config.url = location;
                     this.logger.info(`re-location to :${location}`);
-                    return await this.client.request(response.config)
+                    return await this.client.request(response.config);
                 }
             }
             return response;
@@ -51,17 +51,17 @@ export default class APIClient {
                 config.baseURL = undefined;
                 config["isRetry"] = true;
                 this.logger.warn(`refresh crumb and retrying api :${config.url}`);
-                if(config["isRetry"]){
-                    error.message = `${error.message}, request already retry after first time failure.`
+                if (config["isRetry"]) {
+                    error.message = `${error.message}, request already retry after first time failure.`;
                     return Promise.reject(error);
                 }
-                return await this.client.request(config)
+                return await this.client.request(config);
             }
             if (response?.status === 404 && error?.request?.path?.indexOf("/api/json") === -1) {
                 config.url = `${error?.request?.path}${error?.request?.path?.endsWith("/") ? "" : "/"}api/json`;
                 config.baseURL = undefined;
                 this.logger.info(`get api re-trying fetch json api url:${config.url}`);
-                return await this.client.request(config)
+                return await this.client.request(config);
             }
 
             const { data } = response || {};
@@ -72,7 +72,7 @@ export default class APIClient {
                 rawErrorMessage = rawErrorMessage ? rawErrorMessage[0].replace(/(<([^>]+)>)/ig, " ").replace(/[\r\n]/g, " ") : rawErrorMessage;
             }
 
-            this.logger.error(`api invoke failed,[${config.method}] ${config.url},${data && typeof data == "string" ? data : JSON.stringify(data)}`)
+            this.logger.error(`api invoke failed,[${config.method}] ${config.url},${data && typeof data == "string" ? data : JSON.stringify(data)}`);
             const stack = new Error().stack;
             error = Object.assign(error, { message: `${error.message} ${rawErrorMessage ? "(html error message:" + rawErrorMessage + ")" : ''}`, stack });
             return Promise.reject(error);
@@ -108,7 +108,7 @@ export default class APIClient {
     }
 
     async get(path: string, options?: AxiosRequestConfig) {
-        return this.client.get(path, Object.assign({ headers: this.crumb }, options || {}))
+        return this.client.get(path, Object.assign({ headers: this.crumb }, options || {}));
     }
 
     async post(path: string, data: any = {}, options?: AxiosRequestConfig) {
@@ -116,15 +116,15 @@ export default class APIClient {
             Object.keys(this.crumb).map(k => data.json[k] = this.crumb[k]);
             data.json = JSON.stringify(data.json);
         }
-        data = Object.assign({Submit: ""}, this.crumb, data);
+        data = Object.assign({ Submit: "" }, this.crumb, data);
         if (!data.json) {
             data.json = JSON.stringify(data);
         }
-        return this.client.post(path, qs.stringify(data), Object.assign({ headers: this.crumb }, options || { "content-type": "application/x-www-form-urlencoded" }))
+        return this.client.post(path, qs.stringify(data), Object.assign({ headers: this.crumb }, options || { "content-type": "application/x-www-form-urlencoded" }));
     }
 
     async postConfig(path: string, data: any = {}, options?: AxiosRequestConfig) {
-        return this.client.post(path, data, Object.assign({ headers: this.crumb }, options || { "content-type": "text/xml" }))
+        return this.client.post(path, data, Object.assign({ headers: this.crumb }, options || { "content-type": "text/xml" }));
     }
 
 }
