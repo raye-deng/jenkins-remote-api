@@ -37,7 +37,7 @@ export default class JobAPI {
   }
 
   async clone(sourceName: string, targetName: string) {
-    return this.client.post(`/createItem?name=${targetName}&mode=copy&from=${targetName}`, {});
+    return this.client.post(`/createItem?name=${targetName}&mode=copy&from=${sourceName}`, {});
   }
 
 
