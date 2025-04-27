@@ -19,7 +19,7 @@ class APIClient {
         });
         this.logger = new logger_1.Logger();
         this.client.interceptors.request.use((config) => {
-            if (config.method === "get" && config.url.indexOf("/api/json") === -1) {
+            if (config.method === "get" && config.url.indexOf("/api/json") === -1 && !config.url.includes('.xml') && config.url.indexOf("/logText/progressiveText") === -1) {
                 config.url = `${config.url}/api/json`;
             }
             return config;

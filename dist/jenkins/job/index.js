@@ -10,6 +10,10 @@ class JobAPI {
         const { jobs: list } = data;
         return list.filter(item => item.name === filter);
     }
+    async detail(jobName) {
+        const { data } = await this.client.get(`/job/${jobName}/api/json`);
+        return { data };
+    }
     async createOrUpdate(name, configXML, viewPath) {
         const list = await this.list(name);
         return list && list.length <= 0 ? (viewPath ? this.createInView(name, viewPath, configXML) : this.create(name, configXML)) : this.update(name, configXML);
@@ -28,8 +32,11 @@ class JobAPI {
     async rename(name, targetName) {
         return this.client.post(`/job/${name}/confirmRename?newName=${targetName}`, { json: { newName: targetName } });
     }
+    async getConfig(name) {
+        return this.client.get(`/job/${name}/config.xml`);
+    }
     async clone(sourceName, targetName) {
-        return this.client.post(`/createItem?name=${targetName}&mode=copy&from=${targetName}`, {});
+        return this.client.post(`/createItem?name=${targetName}&mode=copy&from=${sourceName}`, {});
     }
     async remove(name) {
         return this.client.post(`/job/${name}/doDelete`);
@@ -107,6 +114,40 @@ class JobAPI {
         const items = data.match(regex);
         const ids = items.map(item => parseInt(/\/queue\/cancelItem\?id=(\d+)/g.exec(item)[1])).sort((a, b) => a - b);
         return ids;
+    }
+    async getLog(name, buildNumber) {
+        return this.client.get(`/job/${name}/${buildNumber}/consoleText`);
+    }
+    async getArtifactUrls(name, buildNumber) {
+        const { data: buildDetails } = await this.getBuild(name, buildNumber);
+        if (!buildDetails.artifacts || !Array.isArray(buildDetails.artifacts)) {
+            return [];
+        }
+        return buildDetails.artifacts.map(artifact => `${buildDetails.url}artifact/${encodeURIComponent(artifact.relativePath)}`);
+    }
+    async getProgressiveLog(name, buildNumber, pollInterval = 5000) {
+        let startOffset = 0;
+        let completeLog = '';
+        let isComplete = false;
+        while (!isComplete) {
+            const response = await this.client.get(`/job/${name}/${buildNumber}/logText/progressiveText?start=${startOffset}`, {
+                headers: {
+                    'Accept': 'text/plain'
+                },
+                timeout: 5000
+            });
+            startOffset = parseInt(response.headers['x-text-size'] || '0');
+            console.log('\x1b[32m%s\x1b[0m', response.data);
+            completeLog += response.data;
+            const hasMoreData = response.headers['x-more-data'] === 'true';
+            if (!hasMoreData) {
+                isComplete = true;
+            }
+            else {
+                await new Promise(resolve => setTimeout(resolve, pollInterval));
+            }
+        }
+        return completeLog;
     }
 }
 exports.default = JobAPI;

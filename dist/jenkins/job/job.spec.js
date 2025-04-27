@@ -3,17 +3,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const index_1 = require("../index");
 const fs = require("fs");
 const FD = require("form-data");
+const dotenv = require("dotenv");
+dotenv.config();
 describe('job api unit test', () => {
     jest.setTimeout(30e3);
     let client;
     let params = {
         branch: "foo_branch"
     };
-    const jobName = "foo_job";
-    const targetName = "new_foo_job";
-    const notParamsJobName = "foo_job_not_parameters";
+    const jobName = process.env.JOB_NAME || "foo_job";
+    const targetName = process.env.TARGET_NAME || "new_foo_job";
+    const notParamsJobName = process.env.NOT_PARAMS_JOB_NAME || "foo_job_not_parameters";
+    const buildNumber = process.env.BUILD_NUMBER || "1";
     beforeEach(async () => {
-        client = await (0, index_1.init)("http://localhost:8080", "dev", "111a746759b01973b511b2a02dedc58e7c");
+        client = await (0, index_1.init)(process.env.HOST, process.env.USERNAME, process.env.TOKEN);
     });
     it('add or update job', async () => {
         const job_xml1 = fs.readFileSync("./assets/foo_job_not_params.xml", "utf8");
@@ -33,8 +36,14 @@ describe('job api unit test', () => {
     });
     it('list job', async () => {
         const jobs = await client.job.list(jobName);
+        console.log(`jobs:${JSON.stringify(jobs)}`);
         expect(jobs && jobs.length > 0).toBe(true);
     }, 300 * 1000);
+    it('detail job', async () => {
+        const job = await client.job.detail(jobName);
+        console.log(`job:${JSON.stringify(job)}`);
+        expect(job).not.toBe(null);
+    });
     it('build with', async () => {
         const build = await client.job.build(jobName, params);
         expect(build).not.toBe(null);
@@ -93,5 +102,32 @@ describe('job api unit test', () => {
         const delResult1 = await client.job.remove(notParamsJobName);
         expect(delResult1).not.toBe(null);
     });
+    it('get build detail', async () => {
+        const { data: build } = await client.job.getBuild(jobName, buildNumber);
+        console.log(`build fetch done, build result:${build.result}`);
+        expect(build).not.toBe(null);
+        const typedBuild = build;
+        expect(typedBuild._class).toBeDefined();
+        expect(typedBuild.actions).toBeInstanceOf(Array);
+    });
+    it('get build log', async () => {
+        const log = await client.job.getLog(jobName, buildNumber);
+        console.log(log);
+        expect(log).not.toBe(null);
+    });
+    it('get artifact urls', async () => {
+        const artifactUrls = await client.job.getArtifactUrls(jobName, buildNumber);
+        expect(Array.isArray(artifactUrls)).toBe(true);
+        if (artifactUrls.length > 0) {
+            artifactUrls.forEach(url => {
+                expect(url).toMatch(/^https?:\/\/.+\/artifact\//);
+            });
+        }
+    });
+    it('get progressive log', async () => {
+        const log = await client.job.getProgressiveLog(jobName, buildNumber);
+        console.log(log);
+        expect(log).not.toBe(null);
+    }, 600 * 1000);
 });
 //# sourceMappingURL=job.spec.js.map
