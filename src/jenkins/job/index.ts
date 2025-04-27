@@ -1,4 +1,5 @@
 import APIClient from "../api-client";
+import { Build, BuildResponse } from "../../types";
 
 const FD = require("form-data");
 
@@ -71,7 +72,7 @@ export default class JobAPI {
     return this.client.post(`/job/${name}/${id}/replay/run`, fd);
   }
 
-  async getBuild(name: string, buildNumber: string | number) {
+  async getBuild(name: string, buildNumber: string | number): Promise<BuildResponse> {
     return this.client.get(`/job/${name}/${buildNumber}/api/json`);
   }
 
@@ -138,5 +139,61 @@ export default class JobAPI {
     return ids;
   }
 
+  async getLog(name: string, buildNumber: string | number) {
+    return this.client.get(`/job/${name}/${buildNumber}/consoleText`);
+  }
 
+  async getArtifactUrls(name: string, buildNumber: string | number): Promise<string[]> {
+    const { data: buildDetails } = await this.getBuild(name, buildNumber);
+    if (!buildDetails.artifacts || !Array.isArray(buildDetails.artifacts)) {
+      return [];
+    }
+    return buildDetails.artifacts.map(artifact =>
+      `${buildDetails.url}artifact/${encodeURIComponent(artifact.relativePath)}`
+    );
+  }
+
+  /**
+   * Retrieves progressive console output for a build
+   * @param name Job name
+   * @param buildNumber Build number
+   * @param pollInterval Polling interval in milliseconds (default: 5000)
+   * @returns Promise that resolves with the complete console output
+   */
+  async getProgressiveLog(name: string, buildNumber: string | number, pollInterval: number = 5000): Promise<string> {
+    let startOffset = 0;
+    let completeLog = '';
+    let isComplete = false;
+
+    while (!isComplete) {
+      const response = await this.client.get(
+        `/job/${name}/${buildNumber}/logText/progressiveText?start=${startOffset}`,
+        {
+          headers: {
+            'Accept': 'text/plain'
+          },
+          timeout: 5000
+        }
+      );
+
+      // Update the start offset for the next request
+      startOffset = parseInt(response.headers['x-text-size'] || '0');
+
+      console.log('\x1b[32m%s\x1b[0m', response.data);
+      // Append new log content
+      completeLog += response.data;
+
+      // Check if more data is available
+      const hasMoreData = response.headers['x-more-data'] === 'true';
+
+      if (!hasMoreData) {
+        isComplete = true;
+      } else {
+        // Wait for the specified interval before the next poll
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+      }
+    }
+
+    return completeLog;
+  }
 }
