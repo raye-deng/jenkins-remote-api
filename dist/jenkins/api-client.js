@@ -32,7 +32,6 @@ class APIClient {
                 if (location) {
                     response.config.baseURL = undefined;
                     response.config.url = location;
-                    this.logger.info(`re-location to :${location}`);
                     return await this.client.request(response.config);
                 }
             }
@@ -44,7 +43,6 @@ class APIClient {
                 await this.getCrumb();
                 config.baseURL = undefined;
                 config["isRetry"] = true;
-                this.logger.warn(`refresh crumb and retrying api :${config.url}`);
                 if (config["isRetry"]) {
                     error.message = `${error.message}, request already retry after first time failure.`;
                     return Promise.reject(error);
@@ -64,7 +62,6 @@ class APIClient {
                 rawErrorMessage = data.message ? data.message : data.match(regexp);
                 rawErrorMessage = rawErrorMessage ? rawErrorMessage[0].replace(/(<([^>]+)>)/ig, " ").replace(/[\r\n]/g, " ") : rawErrorMessage;
             }
-            this.logger.error(`api invoke failed,[${config.method}] ${config.url},${data && typeof data == "string" ? data : JSON.stringify(data)}`);
             const stack = new Error().stack;
             error = Object.assign(error, { message: `${error.message} ${rawErrorMessage ? "(html error message:" + rawErrorMessage + ")" : ''}`, stack });
             return Promise.reject(error);
