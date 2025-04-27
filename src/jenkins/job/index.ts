@@ -1,5 +1,5 @@
 import APIClient from "../api-client";
-import { Build, BuildResponse } from "../../types";
+import { Build, BuildResponse, JobDetailResponse } from "../../types";
 
 const FD = require("form-data");
 
@@ -12,6 +12,11 @@ export default class JobAPI {
     const { data } = await this.client.get("/api/json");
     const { jobs: list } = data;
     return list.filter(item => item.name === filter);
+  }
+
+  async detail(jobName: string): Promise<JobDetailResponse> {
+    const { data } = await this.client.get(`/job/${jobName}/api/json`);
+    return { data };
   }
 
   async createOrUpdate(name: string, configXML: string, viewPath?: string) {

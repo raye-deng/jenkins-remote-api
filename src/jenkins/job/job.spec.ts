@@ -45,8 +45,15 @@ describe('job api unit test', () => {
 
     it('list job', async () => {
         const jobs = await client.job.list(jobName);
+        console.log(`jobs:${JSON.stringify(jobs)}`)
         expect(jobs && jobs.length > 0).toBe(true)
     }, 300 * 1000);
+
+    it('detail job', async () => {
+        const job = await client.job.detail(jobName);
+        console.log(`job:${JSON.stringify(job)}`)
+        expect(job).not.toBe(null);
+    })
 
     it('build with', async () => {
         const build = await client.job.build(jobName, params);

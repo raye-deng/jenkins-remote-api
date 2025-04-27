@@ -5,3 +5,6 @@
 
 // Export build-related types
 export * from './build'; 
+
+// Export job-related types
+export * from './job'; 
